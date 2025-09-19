@@ -7,7 +7,7 @@ icon: bolt
 
 # Chrome/Edge Deployment Instructions
 
-eview the below options for how to deploy Check to your clients' environments. If you use a RMM not featured, please see the [#generic-powershell](chrome-edge-deployment-instructions.md#generic-powershell "mention") option to script the install.
+Review the below options for how to deploy Check to your clients' environments. If you use a RMM not featured, please see the [#generic-powershell](chrome-edge-deployment-instructions.md#generic-powershell "mention") option to script the install.
 
 <details>
 
@@ -149,7 +149,7 @@ $cippServerUrl = "" # This will set the "CIPP Server URL" option in the extensio
 $cippTenantId = "" # This will set the "Tenant ID/Domain" option in the extension settings; default is blank; if you set $enableCippReporting to 1, you must set this to a valid Tenant ID.
 $customRulesUrl = "" # This will set the "Config URL" option in the Detection Configuration settings; default is blank.
 $updateInterval = 24 # This will set the "Update Interval" option in the Detection Configuration settings; default is 24 (hours). Range: 1-168 hours (1 hour to 1 week)
-$enableDebugLogging = 1 # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Enable Debug Logging" option in the Activity Log settings.
+$enableDebugLogging = 0 # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Enable Debug Logging" option in the Activity Log settings.
 
 # Custom Branding Settings
 $companyName = "CyberDrain" # This will set the "Company Name" option in the Custom Branding settings; default is "CyberDrain".
@@ -214,7 +214,7 @@ function Configure-ExtensionSettings {
 
 # Configure settings for Chrome and Edge
 Configure-ExtensionSettings -ExtensionId $chromeExtensionId -UpdateUrl $chromeUpdateUrl -ManagedStorageKey $chromeManagedStorageKey -ExtensionSettingsKey $chromeExtensionSettingsKey
-Check-ExtensionInstalled -RegKey $edgeRegKey -ExtensionId $edgeExtensionId -UpdateUrl $edgeUpdateUrl -ManagedStorageKey $edgeManagedStorageKey -ExtensionSettingsKey $edgeExtensionSettingsKey
+Configure-ExtensionSettings -ExtensionId $edgeExtensionId -UpdateUrl $edgeUpdateUrl -ManagedStorageKey $edgeManagedStorageKey -ExtensionSettingsKey $edgeExtensionSettingsKey
 ```
 {% endcode %}
 

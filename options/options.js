@@ -56,6 +56,7 @@ class CheckOptions {
     // Detection settings
     this.elements.customRulesUrl = document.getElementById("customRulesUrl");
     this.elements.updateInterval = document.getElementById("updateInterval");
+    this.elements.urlWhitelist = document.getElementById("urlWhitelist");
     this.elements.refreshDetectionRules = document.getElementById(
       "refreshDetectionRules"
     );
@@ -82,6 +83,7 @@ class CheckOptions {
 
     // Branding
     this.elements.companyName = document.getElementById("companyName");
+	this.elements.companyURL = document.getElementById("companyURL");
     this.elements.productName = document.getElementById("productName");
     this.elements.supportEmail = document.getElementById("supportEmail");
     this.elements.primaryColor = document.getElementById("primaryColor");
@@ -163,6 +165,7 @@ class CheckOptions {
     // Branding preview updates
     const brandingInputs = [
       this.elements.companyName,
+	  this.elements.companyURL,
       this.elements.productName,
       this.elements.primaryColor,
       this.elements.logoUrl,
@@ -411,6 +414,7 @@ class CheckOptions {
       console.warn("Options: Using fallback branding configuration");
       this.brandingConfig = {
         companyName: "CyberDrain",
+		companyURL: "https://cyberdrain.com/",
         productName: "Check",
         primaryColor: "#F77F00",
         logoUrl: "images/icon48.png",
@@ -419,6 +423,7 @@ class CheckOptions {
       console.error("Error loading branding configuration:", error);
       this.brandingConfig = {
         companyName: "CyberDrain",
+		companyURL: "https://cyberdrain.com/",
         productName: "Check",
         primaryColor: "#F77F00",
         logoUrl: "images/icon48.png",
@@ -570,6 +575,14 @@ class CheckOptions {
       this.config?.customRulesUrl ||
       "";
 
+    // URL Whitelist settings
+    if (this.elements.urlWhitelist) {
+      const whitelist = this.config?.urlWhitelist || [];
+      this.elements.urlWhitelist.value = Array.isArray(whitelist)
+        ? whitelist.join('\n')
+        : (whitelist || '');
+    }
+
     // Handle updateInterval - ensure we always show hours in the UI
     let updateIntervalHours = 24; // default
     if (this.config?.updateInterval) {
@@ -607,6 +620,7 @@ class CheckOptions {
 
     // Branding settings
     this.elements.companyName.value = this.brandingConfig?.companyName || "";
+	this.elements.companyURL.value = this.brandingConfig?.companyURL || "";
     this.elements.productName.value = this.brandingConfig?.productName || "";
     this.elements.supportEmail.value = this.brandingConfig?.supportEmail || "";
     this.elements.primaryColor.value =
@@ -784,6 +798,11 @@ class CheckOptions {
       // Detection settings
       customRulesUrl: this.elements.customRulesUrl?.value || "",
       updateInterval: parseInt(this.elements.updateInterval?.value || 24),
+      
+      // URL Whitelist settings
+      urlWhitelist: this.elements.urlWhitelist?.value
+        ? this.elements.urlWhitelist.value.split('\n').filter(line => line.trim())
+        : [],
 
       // Debug logging setting
       enableDebugLogging: this.elements.enableDebugLogging?.checked || false,
@@ -837,6 +856,21 @@ class CheckOptions {
       return { valid: false, message: "Custom rules URL is not valid" };
     }
 
+    // URL Whitelist validation
+    if (config.urlWhitelist && Array.isArray(config.urlWhitelist)) {
+      for (const pattern of config.urlWhitelist) {
+        if (pattern.trim()) {
+          const validationResult = this.validateUrlPattern(pattern.trim());
+          if (!validationResult.valid) {
+            return {
+              valid: false,
+              message: `Invalid pattern in URL whitelist: "${pattern.trim()}" - ${validationResult.error}`
+            };
+          }
+        }
+      }
+    }
+
     return { valid: true };
   }
 
@@ -849,9 +883,43 @@ class CheckOptions {
     }
   }
 
+  // Convert URL pattern with wildcards to regex
+  urlPatternToRegex(pattern) {
+    // If it's already a regex pattern (starts with ^ or contains regex chars), return as-is
+    if (pattern.startsWith('^') || pattern.includes('\\') || pattern.includes('[') || pattern.includes('(')) {
+      return pattern;
+    }
+    // Escape special regex characters except *
+    let escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+    // Convert * to .* for wildcard matching
+    escaped = escaped.replace(/\*/g, '.*');
+    // Ensure it matches from the beginning
+    if (!escaped.startsWith('^')) {
+      escaped = '^' + escaped;
+    }
+    // Add end anchor if pattern doesn't end with wildcard
+    if (!pattern.endsWith('*') && !escaped.endsWith('.*')) {
+      escaped = escaped + '$';
+    }
+    return escaped;
+  }
+
+  // Validate URL pattern (either URL with wildcards or regex)
+  validateUrlPattern(pattern) {
+    try {
+      // Try to convert to regex and test it
+      const regexPattern = this.urlPatternToRegex(pattern);
+      new RegExp(regexPattern);
+      return { valid: true };
+    } catch (error) {
+      return { valid: false, error: error.message };
+    }
+  }
+
   gatherBrandingData() {
     return {
       companyName: this.elements.companyName.value,
+	  companyURL: this.elements.companyURL.value,
       productName: this.elements.productName.value,
       supportEmail: this.elements.supportEmail.value,
       primaryColor: this.elements.primaryColor.value,
@@ -1949,6 +2017,7 @@ class CheckOptions {
           // Custom branding (matches managed_schema.json structure)
           customBranding: {
             companyName: "CyberDrain",
+			CompanyURL: "https://cyberdrain.com/",
             productName: "Check Enterprise",
             primaryColor: "#F77F00",
             logoUrl:
@@ -2084,10 +2153,12 @@ class CheckOptions {
       cippTenantId: this.elements.cippTenantId,
       customRulesUrl: this.elements.customRulesUrl,
       updateInterval: this.elements.updateInterval,
+      urlWhitelist: this.elements.urlWhitelist,
       enableDebugLogging: this.elements.enableDebugLogging,
       // Note: enableDeveloperConsoleLogging is excluded - should remain available for debugging
       // Branding fields (if customBranding policy is present)
       companyName: this.elements.companyName,
+	  companyURL: this.elements.companyURL,
       productName: this.elements.productName,
       supportEmail: this.elements.supportEmail,
       primaryColor: this.elements.primaryColor,
@@ -2740,6 +2811,8 @@ class CheckOptions {
   updateBrandingPreview() {
     const companyName =
       this.elements.companyName.value || this.brandingConfig.companyName;
+    const companyURL =
+      this.elements.companyURL.value || this.brandingConfig.companyURL;
     const productName =
       this.elements.productName.value || this.brandingConfig.productName;
     const primaryColor =

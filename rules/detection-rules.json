@@ -38,6 +38,7 @@
     "description": "Centralized exclusion system to prevent false positives on legitimate sites",
     "domain_patterns": [
       "^https://[^/]*\\.security-updater\\.com(/.*)?$",
+      "^https://[^/]*\\.reddit\\.com(/.*)?$",
       "^https://[^/]*\\.ocs\\.help(/.*)?$",
       "^https://[^/]*\\.breach-notice\\.com(/.*)?$",
       "^https://[^/]*\\.filesharingnow\\.com(/.*)?$",
